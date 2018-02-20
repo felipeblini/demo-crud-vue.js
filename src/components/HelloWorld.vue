@@ -40,8 +40,13 @@ export default {
   },
   methods: {
     filtrar() {
-      this.members = membersList
-        .filter(item => item.name.toLowerCase().indexOf(this.keyword) > -1)
+      if (!this.keyword) {
+        console.log('not filter');
+        this.members = membersList
+      } else {
+        this.members = membersList
+          .filter(item => item.name.toLowerCase().indexOf(this.keyword) > -1)
+      }
     },
     excluir(member) {
       console.log(member);
@@ -50,6 +55,7 @@ export default {
     },
     adicionar() {
       this.keyword = '';
+      let _self = this;
       setTimeout(function() {
         const nome = prompt('Digite o nome');
         membersList.unshift({
@@ -57,13 +63,13 @@ export default {
           joinedGroupOn: 'just now'
         })
 
-        this.filtrar();
+        _self.filtrar();
       }, 0);
     },
     editar(member) {
       membersList.forEach((item, i) => {
         if (item.name === member.name) {
-          if(member.status === 1) {
+          if (member.status === 1) {
             member.status = 0;
             return;
           }
