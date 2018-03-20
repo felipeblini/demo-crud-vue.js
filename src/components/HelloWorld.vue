@@ -34,18 +34,19 @@ export default {
   data() {
     return {
       keyword: "",
-      members: list,
-      membersList: list
+      members: [],
+      membersList: []
     };
   },
   methods: {
     filtrar() {
-      console.log("filtrar ", this.keyword);
-      if (this.keyword) {
-        this.membersList = this.members.filter(
-          item => item.name.toLowerCase().indexOf(this.keyword) > -1
-        );
-      }
+      this.membersList = this.members;
+
+      const filteredList = this.membersList.filter(
+        item => item.name.toLowerCase().indexOf(this.keyword) > -1
+      );
+
+      this.membersList = filteredList;
     },
     excluir(member) {
       this.membersList = this.members = this.members.filter(
@@ -103,7 +104,12 @@ export default {
       this.membersList = this.members;
 
       this.$forceUpdate();
+
+      this.filtrar();
     }
+  },
+  mounted() {
+    this.members = this.membersList = list;
   }
 };
 </script>
