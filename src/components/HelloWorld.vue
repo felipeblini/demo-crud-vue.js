@@ -11,13 +11,13 @@
         <div>Data</div>
       </li>
       <li v-for="(member, index) in members" :key="index">
-        <div v-if="member.status">
-          <input type="text" class="edit-field" @keyup.enter="update(member, $event)" :value="member.name">
+        <div v-if="member.status === 'editando'">
+          <input type="text" ref="editField" class="edit-field" @keyup.enter="editar(member, $event)" :value="member.name">
         </div>
         <div v-else>{{ member.name }}</div>
         <div>{{ member.joinedGroupOn }}</div>
         <div>
-          <button class="edit" @click="editar(member)">Editar</button>
+          <button class="edit" @click="mudarStatus('editando', member)">Editar</button>
           <button class="danger" @click="excluir(member)">Excluir</button>
         </div>
       </li>
@@ -26,75 +26,74 @@
 </template>
 
 <script>
-import list from './members';
+import list from "./members";
 
 let membersList = list;
 
 export default {
-  name: 'HelloWorld',
+  name: "HelloWorld",
   data() {
     return {
-      keyword: '',
+      keyword: "",
       members: membersList
-    }
+    };
   },
   methods: {
     filtrar() {
       if (!this.keyword) {
-        console.log('not filter');
-        this.members = membersList
+        // sem filtro
+        this.members = membersList;
       } else {
-        this.members = membersList
-          .filter(item => item.name.toLowerCase().indexOf(this.keyword) > -1)
+        this.members = membersList.filter(
+          item => item.name.toLowerCase().indexOf(this.keyword) > -1
+        );
       }
     },
     excluir(member) {
-      console.log(member);
-      membersList = membersList.filter(x => x.name !== member.name)
+      membersList = membersList.filter(x => x.name !== member.name);
       this.filtrar();
     },
     adicionar() {
-      this.keyword = '';
-      let _self = this;
-      setTimeout(function() {
-        const nome = prompt('Digite o nome');
+      this.keyword = "";
+      setTimeout(() => {
+        const nome = prompt("Digite o nome");
         membersList.unshift({
           name: nome,
-          joinedGroupOn: 'just now'
-        })
+          joinedGroupOn: "just now"
+        });
 
-        _self.filtrar();
+        this.filtrar();
       }, 0);
     },
-    editar(member) {
+    mudarStatus(status, member, event) {
       membersList.forEach((item, i) => {
         if (item.name === member.name) {
-          if (member.status === 1) {
-            member.status = 0;
+          if (member.status === status) {
+            member.status = "";
             return;
           }
-          member.status = 1;
+          member.status = status;
         } else {
-          membersList[i].status = 0;
+          membersList[i].status = "";
         }
       });
 
-      this.$forceUpdate()
+      this.$forceUpdate();
     },
-    update(member, e) {
+    editar(member, event) {
       const name = member.name;
-      const newName = e.target.value
+      const newName = event.target.value;
       membersList.forEach((item, i) => {
         if (item.name === name) {
           membersList[i].name = newName;
-          membersList[i].status = 0;
+          membersList[i].status = "";
         }
       });
 
-      this.$forceUpdate()
+      this.$forceUpdate();
     }
   }
-}
+};
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
@@ -173,12 +172,12 @@ ul li:hover {
 
 .edit {
   background: #428bca;
-  border: solid 1px #3071A9;
+  border: solid 1px #3071a9;
 }
 
 .edit:hover {
-  background: #3071A9;
-  border: solid 1px #3071A9;
+  background: #3071a9;
+  border: solid 1px #3071a9;
 }
 
 a {
