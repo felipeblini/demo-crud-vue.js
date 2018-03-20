@@ -10,14 +10,15 @@
         <div>Nome</div>
         <div>Data</div>
       </li>
-      <li v-for="(member, index) in members" :key="index">
+      <li v-for="(member, index) in membersList" :key="index">
         <div v-if="member.status === 'editando'">
-          <input type="text" ref="editField" class="edit-field" @keyup.enter="editar(member, $event)" :value="member.name">
+          <input type="text" ref="editField" class="edit-field" @keyup.enter="atualizar(member, $event)" :value="member.name">
         </div>
         <div v-else>{{ member.name }}</div>
         <div>{{ member.joinedGroupOn }}</div>
         <div>
-          <button class="edit" @click="mudarStatus('editando', member)">Editar</button>
+          <button class="cancel" @click="cancelar(member)" v-if="member.status === 'editando'">Cancelar</button>
+          <button class="edit" @click="editar(member)" v-else>Editar</button>
           <button class="danger" @click="excluir(member)">Excluir</button>
         </div>
       </li>
@@ -28,67 +29,78 @@
 <script>
 import list from "./members";
 
-let membersList = list;
-
 export default {
   name: "HelloWorld",
   data() {
     return {
       keyword: "",
-      members: membersList
+      members: list,
+      membersList: list
     };
   },
   methods: {
     filtrar() {
-      if (!this.keyword) {
-        // sem filtro
-        this.members = membersList;
-      } else {
-        this.members = membersList.filter(
+      console.log("filtrar ", this.keyword);
+      if (this.keyword) {
+        this.membersList = this.members.filter(
           item => item.name.toLowerCase().indexOf(this.keyword) > -1
         );
       }
     },
     excluir(member) {
-      membersList = membersList.filter(x => x.name !== member.name);
+      this.membersList = this.members = this.members.filter(
+        x => x.name !== member.name
+      );
       this.filtrar();
     },
     adicionar() {
       this.keyword = "";
       setTimeout(() => {
         const nome = prompt("Digite o nome");
-        membersList.unshift({
+
+        // add elements to the beginning of the array
+        this.members.unshift({
           name: nome,
           joinedGroupOn: "just now"
         });
 
+        this.membersList = this.members;
+
         this.filtrar();
       }, 0);
     },
-    mudarStatus(status, member, event) {
-      membersList.forEach((item, i) => {
+    editar(member, event) {
+      this.membersList.forEach((item, i) => {
         if (item.name === member.name) {
-          if (member.status === status) {
-            member.status = "";
-            return;
-          }
-          member.status = status;
-        } else {
-          membersList[i].status = "";
+          member.status = "editando";
         }
       });
 
       this.$forceUpdate();
     },
-    editar(member, event) {
-      const name = member.name;
-      const newName = event.target.value;
-      membersList.forEach((item, i) => {
-        if (item.name === name) {
-          membersList[i].name = newName;
-          membersList[i].status = "";
+    cancelar(member, event) {
+      this.membersList.forEach((item, i) => {
+        if (item.name === member.name) {
+          member.status = "";
         }
       });
+
+      this.$forceUpdate();
+    },
+    atualizar(member, event) {
+      const name = member.name;
+
+      // input
+      const newName = event.target.value;
+
+      this.members.forEach((item, i) => {
+        if (item.name === name) {
+          this.members[i].name = newName;
+          this.members[i].status = "";
+        }
+      });
+
+      this.membersList = this.members;
 
       this.$forceUpdate();
     }
@@ -153,11 +165,13 @@ ul li:hover {
 }
 
 .danger,
-.edit {
+.edit,
+.cancel {
   color: #fff;
   border-radius: 3px;
   cursor: pointer;
   padding: 5px 10px;
+  outline: none;
 }
 
 .danger {
@@ -178,6 +192,17 @@ ul li:hover {
 .edit:hover {
   background: #3071a9;
   border: solid 1px #3071a9;
+}
+
+.cancel {
+  background: #ccc;
+  border: solid 1px #ccc;
+  color: #333;
+}
+
+.cancel:hover {
+  background: #efefef;
+  border: solid 1px #efefef;
 }
 
 a {
