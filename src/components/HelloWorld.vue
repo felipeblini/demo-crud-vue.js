@@ -6,8 +6,9 @@
     </nav>
     <h1>membros</h1>
     <input type="text" class="busca" v-model="keyword">
-    <div>
-      <a href="#" class="novo" @click.prevent="adicionar()">Novo</a>
+    <div class="options">
+      <a href="#" @click.prevent="adicionar()">Novo Membro</a>
+      <a href="#" @click.prevent="sortear()">Sortear</a>
     </div>
     <div class="loading" v-if="loading">Carregando...</div>
     <ul v-if="!loading">
@@ -199,6 +200,24 @@ export default {
       membersData = this.members;
       this.$forceUpdate();
       this.filtrar();
+    },
+    sortear() {
+      this.members = membersData;
+
+      const qntOfMembers = this.members.length;
+      const randomMember = () => {
+        let winnerPos = Math.round(Math.random() * qntOfMembers);
+        this.members = [membersData[winnerPos]];
+      };
+
+      const randomInterval = setInterval(function() {
+        randomMember();
+      }, 200);
+
+      setTimeout(() => {
+        clearInterval(randomInterval);
+        this.$forceUpdate();
+      }, 5000);
     }
   },
   created() {
