@@ -1,7 +1,7 @@
 <template>
   <div>
     <h1>membros</h1>
-    <input type="text" class="busca" @keyup="filtrar()" v-model="keyword">
+    <input type="text" class="busca" v-model="keyword">
     <div>
       <a href="#" class="novo" @click.prevent="adicionar()">Novo</a>
     </div>
@@ -10,15 +10,17 @@
         <div>Nome</div>
         <div>Data</div>
       </li>
-      <li v-for="(member, index) in membersList" :key="index">
-        <div v-if="member.status === 'editando'">
-          <input type="text" ref="editField" class="edit-field" @keyup.enter="atualizar(member, $event)" :value="member.name">
+      <li class="lines" v-for="(member, index) in members" :key="index">
+        <div class="nome" v-if="member.editando">
+          <input type="text" ref="editField" class="edit-field" @keyup.enter="atualizar(member.id, $event.target.value)" :value="member.name">
         </div>
-        <div v-else>{{ member.name }}</div>
-        <div>{{ member.joinedGroupOn }}</div>
-        <div>
-          <button class="cancel" @click="cancelar(member)" v-if="member.status === 'editando'">Cancelar</button>
-          <button class="edit" @click="editar(member)" v-else>Editar</button>
+        <div class="nome" v-else>
+          <a :href="member.profile" target="_blank">{{ member.name }}</a>
+        </div>
+        <div class="data">{{ member.date }}</div>
+        <div class="actions">
+          <button class="cancel" @click="cancelar(member.id)" v-if="member.editando">Cancelar</button>
+          <button class="edit" @click="editar(member.id)" v-else>Editar</button>
           <button class="danger" @click="excluir(member)">Excluir</button>
         </div>
       </li>
@@ -29,28 +31,39 @@
 <script>
 import list from "./members";
 
+let membersData = [];
+
 export default {
   name: "HelloWorld",
   data() {
     return {
       keyword: "",
-      members: [],
-      membersList: []
+      members: []
     };
   },
   methods: {
-    filtrar() {
-      this.membersList = this.members;
+    listMembers() {
+      membersData = list.map(item => {
+        return {
+          id: new Date().getTime() + Math.random() * 999999,
+          ...item
+        };
+      });
 
-      const filteredList = this.membersList.filter(
+      this.members = membersData;
+
+      console.log(this.members);
+    },
+    filtrar() {
+      this.members = membersData;
+      this.members = this.members.filter(
         item => item.name.toLowerCase().indexOf(this.keyword) > -1
       );
-
-      this.membersList = filteredList;
     },
     excluir(member) {
-      this.membersList = this.members = this.members.filter(
-        x => x.name !== member.name
+      this.members = membersData;
+      membersData = this.members = this.members.filter(
+        item => item.id !== member.id
       );
       this.filtrar();
     },
@@ -58,68 +71,68 @@ export default {
       this.keyword = "";
       setTimeout(() => {
         const nome = prompt("Digite o nome");
-
-        // add elements to the beginning of the array
-        this.members.unshift({
-          name: nome,
-          joinedGroupOn: "just now"
-        });
-
-        this.membersList = this.members;
-
+        if (nome) {
+          // add elements to the beginning of the array
+          this.members.unshift({
+            id: new Date().getTime(),
+            name: nome,
+            date: "just now",
+            photo:
+              "http://res.cloudinary.com/dwtuxv53y/image/upload/v1519940593/avatar_operqm.gif"
+          });
+        }
+        membersData = this.members;
         this.filtrar();
       }, 0);
     },
-    editar(member, event) {
-      this.membersList.forEach((item, i) => {
-        if (item.name === member.name) {
-          member.status = "editando";
+    editar(id) {
+      membersData.forEach(member => {
+        if (member.id === id) {
+          member.editando = true;
         }
       });
-
       this.$forceUpdate();
     },
-    cancelar(member, event) {
-      this.membersList.forEach((item, i) => {
-        if (item.name === member.name) {
-          member.status = "";
+    cancelar(id) {
+      membersData.forEach(member => {
+        if (member.id === id) {
+          member.editando = false;
         }
       });
-
       this.$forceUpdate();
     },
-    atualizar(member, event) {
-      const name = member.name;
-
-      // input
-      const newName = event.target.value;
-
-      this.members.forEach((item, i) => {
-        if (item.name === name) {
-          this.members[i].name = newName;
-          this.members[i].status = "";
+    atualizar(id, value) {
+      const byId = item => item.id === id;
+      let member = this.members.filter(byId)[0];
+      member.name = value;
+      member.editando = false;
+      const updateMember = item => {
+        if (item === member) {
+          item = member;
         }
-      });
-
-      this.membersList = this.members;
-
+      };
+      this.members.forEach(updateMember);
+      membersData = this.members;
       this.$forceUpdate();
-
       this.filtrar();
     }
   },
-  mounted() {
-    this.members = this.membersList = list;
+  created() {
+    this.listMembers();
+  },
+  watch: {
+    keyword: {
+      handler: "filtrar"
+    }
   }
 };
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
+<style scoped lang="scss">
 h1 {
   font-weight: normal;
 }
-
 input.busca {
   border: solid 1px #ccc;
   padding: 13px;
@@ -130,46 +143,66 @@ input.busca {
   text-align: center;
   margin-bottom: 45px;
 }
-
 input.edit-field {
   border: solid 1px #ccc;
   padding: 3px;
   border-radius: 3px;
   outline: none;
 }
+nav a,
+.options a {
+  display: inline-block;
+  padding: 10px 15px;
+}
+
+.options a {
+  border: solid #ccc;
+  border-radius: 6px;
+  text-decoration: none;
+}
 
 ul {
   list-style-type: none;
   padding: 0;
   text-align: left;
+
+  li {
+    display: flex;
+    padding: 10px;
+    align-items: center;
+  }
+
+  li.header {
+    font-weight: bold;
+
+    div:nth-child(1) {
+      width: 130px;
+    }
+
+    div:nth-child(2) {
+      width: 30%;
+    }
+  }
 }
 
-ul li:nth-child(1) {
-  font-weight: bold;
+ul li.lines div.img {
+  width: 130px;
 }
-
-ul li div:nth-child(1) {
+ul li.lines div.img img {
+  width: 70px;
+}
+ul li.lines div.nome {
   width: 30%;
 }
-
-ul li div:nth-child(3) {
+ul li.lines div.data {
   flex-grow: 1;
-  text-align: right;
 }
-
-ul li:nth-child(even) {
+ul li.lines:nth-child(even) {
   background: #efefef;
 }
-
-ul li {
-  display: flex;
-  padding: 10px;
-}
-
-ul li:hover {
+ul li.lines:hover {
   background: #d7f2e6;
 }
-
 .danger,
 .edit,
 .cancel {
@@ -179,36 +212,34 @@ ul li:hover {
   padding: 5px 10px;
   outline: none;
 }
-
 .danger {
   background: red;
   border: solid 1px red;
-}
 
-.danger:hover {
-  background: darkred;
-  border: solid 1px darkred;
+  &:hover {
+    background: darkred;
+    border: solid 1px darkred;
+  }
 }
 
 .edit {
   background: #428bca;
   border: solid 1px #3071a9;
-}
 
-.edit:hover {
-  background: #3071a9;
-  border: solid 1px #3071a9;
+  &:hover {
+    background: #3071a9;
+    border: solid 1px #3071a9;
+  }
 }
 
 .cancel {
-  background: #ccc;
-  border: solid 1px #ccc;
-  color: #333;
-}
-
-.cancel:hover {
   background: #efefef;
-  border: solid 1px #efefef;
+  border: solid 1px #424141;
+  color: #333;
+
+  &:hover {
+    background: #e4e3e3;
+  }
 }
 
 a {
