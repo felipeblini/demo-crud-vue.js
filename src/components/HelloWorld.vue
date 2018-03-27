@@ -1,11 +1,16 @@
 <template>
   <div>
+    <nav>
+      <a href="#" @click.prevent="listMembers">Todos</a>
+      <a href="#" @click.prevent="listEventRSVPs('248583682')">Meetup VI</a>
+    </nav>
     <h1>membros</h1>
     <input type="text" class="busca" v-model="keyword">
     <div>
       <a href="#" class="novo" @click.prevent="adicionar()">Novo</a>
     </div>
-    <ul>
+    <div class="loading" v-if="loading">Carregando...</div>
+    <ul v-if="!loading">
       <li class="header">
         <div>Foto</div>
         <div>Nome</div>
@@ -43,12 +48,15 @@ export default {
   data() {
     return {
       keyword: "",
-      members: []
+      members: [],
+      loading: false
     };
   },
   methods: {
     listMembers() {
       membersData = this.members = [];
+
+      this.loading = true;
 
       membersService
         .getMembers()
@@ -80,6 +88,53 @@ export default {
           });
 
           membersData = this.members;
+
+          this.loading = false;
+        })
+        .catch(err => console.log(err));
+    },
+    listEventRSVPs(eventId) {
+      membersData = this.members = [];
+
+      this.loading = true;
+
+      membersService
+        .getEventRSVP(eventId)
+        .then(result => {
+          const data = result.data.data;
+          const _transformList = (list, fn) => list.map(fn);
+          const _timeToDate = time => new Date(time);
+          const _formatDate = (date, formatString) => date.format(formatString);
+          const _addToRSVPList = item => {
+            this.members.push(item);
+          };
+          const _transformData = item => {
+            if (item.response === "yes") {
+              const photo = item.member.photo
+                ? item.member.photo.thumb_link
+                : "http://res.cloudinary.com/dwtuxv53y/image/upload/v1519940593/avatar_operqm.gif";
+              const tranformedRSVP = {
+                ...item,
+                id: item.member.id,
+                name: item.member.name,
+                date: _formatDate(_timeToDate(item.created), "D d/m/Y"),
+                photo,
+                profile: `https://www.meetup.com/dev-pp/members/${
+                  item.member.id
+                }`
+              };
+              return tranformedRSVP;
+            }
+          };
+          _transformList(data, _transformData).forEach(item => {
+            if (item) {
+              _addToRSVPList(item);
+            }
+          });
+
+          membersData = this.members;
+
+          this.loading = false;
         })
         .catch(err => console.log(err));
     },
@@ -273,5 +328,9 @@ ul li.lines:hover {
 
 a {
   color: #42b983;
+}
+
+.loading {
+  padding: 50px;
 }
 </style>
