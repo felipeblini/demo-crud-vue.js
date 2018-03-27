@@ -6,11 +6,15 @@
       <a href="#" class="novo" @click.prevent="adicionar()">Novo</a>
     </div>
     <ul>
-      <li>
+      <li class="header">
+        <div>Foto</div>
         <div>Nome</div>
         <div>Data</div>
       </li>
       <li class="lines" v-for="(member, index) in members" :key="index">
+        <div class="img">
+          <img :src="member.photo" alt="">
+        </div>
         <div class="nome" v-if="member.editando">
           <input type="text" ref="editField" class="edit-field" @keyup.enter="atualizar(member.id, $event.target.value)" :value="member.name">
         </div>
@@ -29,7 +33,8 @@
 </template>
 
 <script>
-import list from "./members";
+import membersService from "../services/membersService";
+import * as datejs from "datejs";
 
 let membersData = [];
 
@@ -43,16 +48,40 @@ export default {
   },
   methods: {
     listMembers() {
-      membersData = list.map(item => {
-        return {
-          id: new Date().getTime() + Math.random() * 999999,
-          ...item
-        };
-      });
+      membersData = this.members = [];
 
-      this.members = membersData;
+      membersService
+        .getMembers()
+        .then(result => {
+          const data = result.data.data;
+          const _transformList = (list, fn) => list.map(fn);
+          const _timeToDate = time => new Date(time);
+          const _formatDate = (date, formatString) => date.format(formatString);
+          const _addToList = item => {
+            this.members.push(item);
+          };
+          const _transformData = item => {
+            const photo = item.photo
+              ? item.photo.thumb_link
+              : "http://res.cloudinary.com/dwtuxv53y/image/upload/v1519940593/avatar_operqm.gif";
+            const tranformedItem = {
+              ...item,
+              date: _formatDate(_timeToDate(item.joined), "D d/m/Y"),
+              photo,
+              profile: `https://www.meetup.com/dev-pp/members/${item.id}`
+            };
+            return tranformedItem;
+          };
 
-      console.log(this.members);
+          _transformList(data, _transformData).forEach(item => {
+            if (item) {
+              _addToList(item);
+            }
+          });
+
+          membersData = this.members;
+        })
+        .catch(err => console.log(err));
     },
     filtrar() {
       this.members = membersData;
