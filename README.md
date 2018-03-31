@@ -1,0 +1,1 @@
+Step 3: add the feature to get a random member from the list, it includes the button 'sortear' and the method `sortear` into `components/HelloWorld.vue`.
