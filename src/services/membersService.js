@@ -10,11 +10,4 @@ const getMembers = () => {
   });
 }
 
-const getEventRSVP = eventId => {
-  return axios({
-    url: `${apiurl}/events/${eventId}/rsvps`,
-    adapter: jsonpAdapter
-  });
-}
-
-export default { getMembers, getEventRSVP }
+export default { getMembers }
