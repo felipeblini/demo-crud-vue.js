@@ -138,13 +138,10 @@ export default {
         .catch(err => console.log(err));
     },
     filtrar() {
-      console.log("membersData.length", membersData.length);
       this.members = membersData;
-      console.log("this.keyword", this.keyword);
       this.members = this.members.filter(
         item => item.name.toLowerCase().indexOf(this.keyword) > -1
       );
-      console.log("membersData.length", membersData.length);
     },
     excluir(member) {
       this.members = membersData;
@@ -188,7 +185,6 @@ export default {
       this.$forceUpdate();
     },
     atualizar(id, value) {
-      console.log("membersData.length", membersData.length);
       const byId = item => item.id === id;
       let member = this.members.filter(byId)[0];
       member.name = value;
@@ -203,10 +199,8 @@ export default {
       membersData.forEach(updateMember);
 
       this.filtrar();
-      console.log("membersData.length", membersData.length);
     },
     sortear() {
-      console.log("membersData.length", membersData.length);
       this.members = membersData;
       this.keyword = "";
 
@@ -224,8 +218,6 @@ export default {
       setTimeout(() => {
         clearInterval(randomInterval);
       }, 5000);
-
-      console.log("membersData.length", membersData.length);
     }
   },
   created() {
