@@ -1,0 +1,1 @@
+Step 2: add the methods `getEventRSVP` into `services/membersService.js` and `listEventRSVPs(eventId)` into `components/HelloWorld.vue` to retrieve member's rsvp from a event, add `nav` in the template to navigate between the 2 lists, and add a `loading` to manage when the data is loading or not to improve UX.
