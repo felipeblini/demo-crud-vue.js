@@ -141,8 +141,7 @@ export default {
         }
       };
       this.members.forEach(updateMember);
-      membersData = this.members;
-      this.$forceUpdate();
+      membersData.forEach(updateMember);
       this.filtrar();
     }
   },
