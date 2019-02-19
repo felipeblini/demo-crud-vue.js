@@ -11,6 +11,9 @@
     "build": "node build/build.js"
   },
   "dependencies": {
+    "axios": "0.18.0",
+    "axios-jsonp": "1.0.1",
+    "datejs": "1.0.0-rc3",
     "vue": "^2.5.2"
   },
   "devDependencies": {

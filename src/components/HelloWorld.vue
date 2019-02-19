@@ -1,27 +1,93 @@
 <template>
   <div>
+    <nav>
+      <a
+        href="#"
+        v-on:click.prevent="listMembers"
+      >Todos</a>
+      <!-- <a
+        href="#"
+        @click.prevent="listEventRSVPs('248583682')"
+      >Meetup VI</a> -->
+    </nav>
     <h1>membros</h1>
-    <input type="text" class="busca" v-model="keyword">
-    <div>
-      <a href="#" class="novo" @click.prevent="adicionar()">Novo</a>
+    <input
+      type="text"
+      class="busca"
+      v-model="keyword"
+    >
+    <div class="options">
+      <a
+        href="#"
+        @click.prevent="adicionar()"
+      >Novo Membro</a>
+      <a
+        href="#"
+        @click.prevent="filtrarPorEvento()"
+      >Filtrar por Evento</a>
+      <a
+        href="#"
+        @click.prevent="sortear()"
+      >Sortear</a>
     </div>
-    <ul>
-      <li>
+    <div
+      class="loading"
+      v-if="loading"
+    >Carregando...</div>
+    <ul v-if="!loading">
+      <li class="header">
+        <div>Foto</div>
         <div>Nome</div>
         <div>Data</div>
       </li>
-      <li class="lines" v-for="(member, index) in members" :key="index">
-        <div class="nome" v-if="member.editando">
-          <input type="text" ref="editField" class="edit-field" @keyup.enter="atualizar(member.id, $event.target.value)" :value="member.name">
+      <li
+        class="lines"
+        v-for="(member, index) in members"
+        :key="index"
+      >
+        <div class="img">
+          <img
+            :src="member.photo"
+            alt=""
+          >
         </div>
-        <div class="nome" v-else>
-          <a :href="member.profile" target="_blank">{{ member.name }}</a>
+        <div
+          class="nome"
+          v-if="member.editando"
+        >
+          <input
+            type="text"
+            ref="editField"
+            class="edit-field"
+            @keyup.enter="atualizar(member.id, $event.target.value)"
+            :value="member.name"
+          >
+        </div>
+        <div
+          class="nome"
+          v-else
+        >
+          <a
+            :href="member.profile"
+            target="_blank"
+          >{{ member.name }}</a>
         </div>
         <div class="data">{{ member.date }}</div>
         <div class="actions">
-          <button class="cancel" @click="cancelar(member.id)" v-if="member.editando">Cancelar</button>
-          <button class="edit" @click="editar(member.id)" v-else>Editar</button>
-          <button class="danger" @click="excluir(member)">Excluir</button>
+          <button
+            class="cancel"
+            @click="cancelar(member.id)"
+            v-if="member.editando"
+          >Cancelar</button>
+          <button
+            class="edit"
+            @click="editar(member.id)"
+            v-else
+          >Editar</button>
+          <button
+            class="danger"
+            @click="excluir(member)"
+          >Excluir</button>
         </div>
       </li>
     </ul>
@@ -29,7 +95,8 @@
 </template>
 
 <script>
-import list from "./members";
+import membersService from "../services/memberService";
+import * as datejs from "datejs";
 
 let membersData = [];
 
@@ -38,21 +105,96 @@ export default {
   data() {
     return {
       keyword: "",
-      members: []
+      members: [],
+      loading: false,
+      eventIdInput: ""
     };
   },
   methods: {
     listMembers() {
-      membersData = list.map(item => {
-        return {
-          id: new Date().getTime() + Math.random() * 999999,
-          ...item
-        };
-      });
+      membersData = this.members = [];
 
-      this.members = membersData;
+      this.loading = true;
 
-      console.log(this.members);
+      membersService
+        .getMembers()
+        .then(result => {
+          const data = result.data.data;
+          const _transformList = (list, fn) => list.map(fn);
+          const _timeToDate = time => new Date(time);
+          const _formatDate = (date, formatString) => date.format(formatString);
+          const _addToList = item => {
+            this.members.push(item);
+          };
+          const _transformData = item => {
+            const photo = item.photo
+              ? item.photo.thumb_link
+              : "http://res.cloudinary.com/dwtuxv53y/image/upload/v1519940593/avatar_operqm.gif";
+            const tranformedItem = {
+              ...item,
+              date: _formatDate(_timeToDate(item.joined), "D d/m/Y"),
+              photo,
+              profile: `https://www.meetup.com/dev-pp/members/${item.id}`
+            };
+            return tranformedItem;
+          };
+
+          _transformList(data, _transformData).forEach(item => {
+            if (item) {
+              _addToList(item);
+            }
+          });
+
+          membersData = this.members;
+
+          this.loading = false;
+        })
+        .catch(err => console.log(err));
+    },
+    listEventRSVPs(eventId) {
+      membersData = this.members = [];
+
+      this.loading = true;
+
+      membersService
+        .getEventRSVP(eventId)
+        .then(result => {
+          const data = result.data.data;
+          const _transformList = (list, fn) => list.map(fn);
+          const _timeToDate = time => new Date(time);
+          const _formatDate = (date, formatString) => date.format(formatString);
+          const _addToRSVPList = item => {
+            this.members.push(item);
+          };
+          const _transformData = item => {
+            if (item.response === "yes") {
+              const photo = item.member.photo
+                ? item.member.photo.thumb_link
+                : "http://res.cloudinary.com/dwtuxv53y/image/upload/v1519940593/avatar_operqm.gif";
+              const tranformedRSVP = {
+                ...item,
+                id: item.member.id,
+                name: item.member.name,
+                date: _formatDate(_timeToDate(item.created), "D d/m/Y"),
+                photo,
+                profile: `https://www.meetup.com/dev-pp/members/${
+                  item.member.id
+                }`
+              };
+              return tranformedRSVP;
+            }
+          };
+          _transformList(data, _transformData).forEach(item => {
+            if (item) {
+              _addToRSVPList(item);
+            }
+          });
+
+          membersData = this.members;
+
+          this.loading = false;
+        })
+        .catch(err => console.log(err));
     },
     filtrar() {
       this.members = membersData;
@@ -85,6 +227,15 @@ export default {
         this.filtrar();
       }, 0);
     },
+    filtrarPorEvento() {
+      this.eventIdInput = "";
+      setTimeout(() => {
+        const eventId = prompt("Digite o nome");
+        if (eventId) {
+          this.listEventRSVPs(eventId);
+        }
+      }, 0);
+    },
     editar(id) {
       membersData.forEach(member => {
         if (member.id === id) {
@@ -115,6 +266,24 @@ export default {
       membersData = this.members;
       this.$forceUpdate();
       this.filtrar();
+    },
+    sortear() {
+      this.members = membersData;
+
+      const qntOfMembers = this.members.length;
+      const randomMember = () => {
+        let winnerPos = Math.round(Math.random() * qntOfMembers);
+        this.members = [membersData[winnerPos]];
+      };
+
+      const randomInterval = setInterval(function() {
+        randomMember();
+      }, 200);
+
+      setTimeout(() => {
+        clearInterval(randomInterval);
+        this.$forceUpdate();
+      }, 5000);
     }
   },
   created() {
@@ -186,10 +355,10 @@ ul {
 }
 
 ul li.lines div.img {
-  width: 130px;
+  width: 250px;
 }
 ul li.lines div.img img {
-  width: 70px;
+  width: 200px;
 }
 ul li.lines div.nome {
   width: 30%;
@@ -244,5 +413,9 @@ ul li.lines:hover {
 
 a {
   color: #42b983;
+}
+
+.loading {
+  padding: 50px;
 }
 </style>
