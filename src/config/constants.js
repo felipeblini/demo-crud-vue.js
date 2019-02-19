@@ -1,1 +1,1 @@
-export const apiurl = "http://api.meetup.com/dev-pp";
+export const apiurl = "https://api.meetup.com/dev-pp";
